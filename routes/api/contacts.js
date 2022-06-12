@@ -1,15 +1,15 @@
 const express = require('express');
 const { contacts: ctrl } = require('../../controllers');
-const { validation, idValidation } = require('../../middlewares');
+const { auth, validation, idValidation } = require('../../middlewares');
 const { joiSchema, statusJoiSchema } = require('../../models/contact');
 
 const router = express.Router();
 
-router.get('/', ctrl.getAll);
+router.get('/', auth, ctrl.getAll);
 
 router.get('/:contactId', idValidation(), ctrl.getById);
 
-router.post('/', validation(joiSchema), ctrl.add);
+router.post('/', auth, validation(joiSchema), ctrl.add);
 
 router.put(
   '/:contactId',
@@ -25,6 +25,6 @@ router.patch(
   ctrl.updateStatus
 );
 
-router.delete('/:contactId', idValidation(), ctrl.deleteById);
+router.delete('/:contactId', auth, idValidation(), ctrl.deleteById);
 
 module.exports = router;
