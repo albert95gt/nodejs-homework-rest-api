@@ -1,25 +1,27 @@
 const { User } = require('../../models');
 const path = require('path');
 const fs = require('fs/promises');
-
-const avatarDir = path.join(__dirname, '../../', 'temp');
+const { TEMP_DIR } = require('../../helpers/constants');
+const { uploadImage, updateUserAvatar } = require('../../services');
 
 const updateAvatar = async (req, res, next) => {
   const { path: tempUpload, originalname } = req.file;
-  const { _id: id } = req.user;
+  const { _id: id, avatarURL: avatarPath } = req.user;
 
-  const avatarName = `${id}_${originalname}`;
   try {
-    const resultUpload = path.join(avatarDir, avatarName);
+    const resultUpload = path.join(TEMP_DIR, originalname);
 
     await fs.rename(tempUpload, resultUpload);
-    const avatarURL = path.join('public', 'avatars', avatarName);
+    const avatarURL = await uploadImage(id, req.file);
+    if (avatarURL !== avatarPath) {
+      await updateUserAvatar(req.user);
+    }
 
     await User.findByIdAndUpdate(id, { avatarURL });
     res.json({ avatarURL });
   } catch (error) {
     await fs.unlink(tempUpload);
-    throw error;
+    next(error);
   }
 };
 
